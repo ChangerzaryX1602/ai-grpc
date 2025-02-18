@@ -1,0 +1,27 @@
+grpc:
+  port: 50051
+gemini:
+  keys:
+    1: "AIzaSyCSHvEQ6i334rRhLBaQ3f8A5z9mpD2IKYQ"
+    2: "AIzaSyCu0mckbQBZQU6Rs2Y4QaFtWlBNZYCc6W0"
+    3: "AIzaSyBaHjmIXr3CQCU7jy7bg24kE9RqSQVb8Os"
+    4: "AIzaSyAw_MYiLFLsfsLspLK9T2eqdDN30CLdCak"
+  models:
+    1: "gemini-2.0-flash"
+    2: "gemini-2.0-flash-lite-preview-02-05"
+    3: "gemini-1.5-flash"
+    4: "gemini-1.5-flash-8b"
+    5: "gemini-1.5-pro"
+chatgpt:
+  keys:
+    1: "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"
+  models:
+    1: "gpt-4"
+deepseek:
+  keys: 
+    1: "sk-eae29010b6bd4e78a0ecd3eddb81b6d9"
+  models:
+    1: "deepseek-chat"
+claude:
+  keys: 
+    1: "AIzaSyAw_MYiLFLsfsLspLK9T2eqdDN30CLdCak"

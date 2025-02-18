@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package ai.api.proto;
+
+option go_package = "api/pb";
+
+service AiService {
+    rpc Ask(AiRequest) returns (AiResponse) {}
+}
+message AiRequest {
+    string question = 1;
+    // bytes image = 2;
+    // bool isDeepThinking = 3;
+}
+message AiResponse {
+    repeated string answer = 1;
+}

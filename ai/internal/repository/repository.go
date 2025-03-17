@@ -3,9 +3,12 @@ package repository
 import (
 	"ai/api/pb"
 	"ai/internal/entity"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 
@@ -113,12 +116,59 @@ func generate(ctx context.Context, ai string, prompt string, imageData []byte, a
 		}
 		aiAnswer.Answer = fmt.Sprintf("%v", resp.Candidates[0].Content.Parts[0])
 		if strings.Contains(aiAnswer.Answer, "Don't know") {
-			resp, err = dontKnow(generative, "Answer about Khon Kaen University(KKU).You must always provide your answers in both Thai and English(Example. ภาษาไทย:สวัสดี English:Hello).(Must answer with raw text, do not include any HTML tags or formatting)"+prompt)
+			// resp, err = dontKnow(generative, "Answer about Khon Kaen University(KKU).You must always provide your answers in both Thai and English(Example. ภาษาไทย:สวัสดี English:Hello).(Must answer with raw text, do not include any HTML tags or formatting)"+prompt)
+			// if err != nil {
+			// 	return nil, err
+			// }
+			resp, err := generateContentWithGoogleAPI("System Query:\n"+`Answer about Khon Kaen University(KKU).
+			You must always provide your answers in both Thai and English
+			Must answer with raw text, do not include any HTML tags or formatting
+			For example:
+			User Query: Where are EN16101?
+			Your Response:
+			ภาษาไทย: อยู่ข้างตึก 50
+			English: Near 50th anniversary building
+			Must answer with raw text, do not include any HTML tags or formatting`+"\n\nUser Query:\n"+prompt, apiKey)
 			if err != nil {
+				fmt.Printf("Error generating content: %v\n", err)
 				return nil, err
 			}
+			// Assuming resp is of type map[string]interface{}
+			candidates, ok := resp["candidates"].([]interface{})
+			if !ok || len(candidates) == 0 {
+				return nil, fmt.Errorf("no candidates found")
+			}
+
+			candidate, ok := candidates[0].(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("candidate type assertion failed")
+			}
+
+			content, ok := candidate["content"].(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("content type assertion failed")
+			}
+
+			parts, ok := content["parts"].([]interface{})
+			if !ok || len(parts) == 0 {
+				return nil, fmt.Errorf("no parts found in content")
+			}
+			var textArr []string
+			for _, part := range parts {
+				firstPart, ok := part.(map[string]interface{})
+				if !ok {
+					return nil, fmt.Errorf("part type assertion failed")
+				}
+				text, ok := firstPart["text"].(string)
+				if !ok {
+					return nil, fmt.Errorf("text type assertion failed")
+				}
+				textArr = append(textArr, text)
+			}
+			text := strings.Join(textArr, "\n")
+			aiAnswer.Answer = text
+
 		}
-		aiAnswer.Answer = fmt.Sprintf("%v", resp.Candidates[0].Content.Parts[0])
 		return aiAnswer, nil
 	}
 	return nil, fmt.Errorf("unsupported AI model")
@@ -129,6 +179,64 @@ func dontKnow(generative *genai.GenerativeModel, prompt string) (*genai.Generate
 		return nil, err
 	}
 	return resp, nil
+}
+func generateContentWithGoogleAPI(prompt string, apiKey string) (map[string]interface{}, error) {
+	// Prepare the JSON payload.
+	payload := map[string]interface{}{
+		"contents": []map[string]interface{}{
+			{
+				"parts": []map[string]string{
+					{"text": prompt},
+				},
+			},
+		},
+		"tools": []map[string]interface{}{
+			{
+				"google_search": map[string]interface{}{},
+			},
+		},
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSON payload: %w", err)
+	}
+	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s", apiKey)
+
+	// Create the HTTP POST request.
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send the request.
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check if the response status code indicates success.
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("non-200 response: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Read and return the response body.
+	result, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	// convert to *genai.GenerateContentResponse
+	var response map[string]interface{}
+	err = json.Unmarshal(result, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response body: %w", err)
+	}
+
+	return response, nil
 }
 func ableToRead(text string) []string {
 	var answer []string

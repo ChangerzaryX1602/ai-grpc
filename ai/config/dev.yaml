@@ -8,10 +8,10 @@ gemini:
     4: "AIzaSyAw_MYiLFLsfsLspLK9T2eqdDN30CLdCak"
   models:
     1: "gemini-2.0-flash"
-    # 2: "gemini-2.0-flash-lite-preview-02-05"
-    # 3: "gemini-1.5-flash"
-    # 4: "gemini-1.5-flash-8b"
-    # 5: "gemini-1.5-pro"
+    2: "gemini-2.0-flash-lite-preview-02-05"
+    3: "gemini-1.5-flash"
+    4: "gemini-1.5-flash-8b"
+    5: "gemini-1.5-pro"
 chatgpt:
   keys:
     1: "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"

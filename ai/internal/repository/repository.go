@@ -64,16 +64,12 @@ func generateContentWithFallback(ctx context.Context, prompt string, imageData [
 
 func generate(ctx context.Context, ai string, prompt string, imageData []byte, apiKey string, model string) (*entity.AiAnswer, error) {
 	var aiAnswer = &entity.AiAnswer{}
-
-	// โหลดไฟล์ JSON จาก ./assets/question.json
 	jsonFilePath := "./assets/question.json"
 	jsonData, err := ioutil.ReadFile(jsonFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read json file: %w", err)
 	}
-
-	// กำหนด system prompt
-	var systemPrompt = `You are the KKU Information AI. You have access to a JSON file containing detailed and up-to-date information about King KKU University (KKU). Your task is to answer any user query using only the data provided in the JSON file. However, if the queried information is not found in the JSON file, you must search for the information from reliable sources. Before providing your answer, verify the credibility of the information by checking if multiple reputable sites refer to it. Do not provide random or inaccurate answers. If the search does not yield any results or the information is unavailable in your model, clearly respond that the information is unavailable.
+	var systemPrompt = `You are the KKU Information AI. You have access to a JSON file containing detailed and up-to-date information about Khon Kaen University (KKU). Your task is to answer any user query using only the data provided in the JSON file. However, if the queried information is not found in the JSON file, you must search for the information from reliable sources. Before providing your answer, verify the credibility of the information by checking if multiple reputable sites refer to it. Do not provide random or inaccurate answers. If the search does not yield any results or the information is unavailable in your model, clearly respond that the information is unavailable.
 You must always provide your answers in both Thai and English. Ensure that your responses are precise, fact-based, and directly address the user's question. Do not include any extraneous information beyond what is necessary to answer the query.
 
 For example:
@@ -91,8 +87,6 @@ Important rules:
 6. Keep the response strictly limited to answering the user’s query without additional commentary or unrelated details.
 7. Answer in both languages (Thai and English) in every response.
 `
-
-	// รวม system prompt, ข้อมูล JSON และ user prompt เข้าไว้ใน full prompt
 	fullPrompt := systemPrompt + "\n\nJSON Data:\n" + string(jsonData) + "\n\nUser Query:\n" + prompt
 
 	switch ai {

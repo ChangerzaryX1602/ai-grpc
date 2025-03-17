@@ -65,29 +65,30 @@ func generateContentWithFallback(ctx context.Context, prompt string, imageData [
 func generate(ctx context.Context, ai string, prompt string, imageData []byte, apiKey string, model string) (*entity.AiAnswer, error) {
 	var aiAnswer = &entity.AiAnswer{}
 	jsonFilePath := "./assets/question.json"
-	jsonData, err := ioutil.ReadFile(jsonFilePath)
+	data, err := ioutil.ReadFile(jsonFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read json file: %w", err)
 	}
-	var systemPrompt = `You are the KKU Information AI. You have access to a JSON file containing detailed and up-to-date information about Khon Kaen University (KKU). Your task is to answer any user query using only the data provided in the JSON file. However, if the queried information is not found in the JSON file, you must search for the information from reliable sources. Before providing your answer, verify the credibility of the information by checking if multiple reputable sites refer to it. Do not provide random or inaccurate answers. If the search does not yield any results or the information is unavailable in your model, clearly respond that the information is unavailable.
-You must always provide your answers in both Thai and English. Ensure that your responses are precise, fact-based, and directly address the user's question. Do not include any extraneous information beyond what is necessary to answer the query.
+	//If you don't know just say "Don't know" don't need Thai just the word "Don't know".
+	var systemPrompt = `You are the KKU Information AI. You have access to a JSON file containing detailed and up-to-date information about Khon Kaen University (KKU). Your task is to answer any user query using only the data provided in the JSON file. **However, if the queried information is not found in the JSON file, you must search for the information from reliable sources to answer the question.** Before providing your answer, verify the credibility of the information by checking if multiple reputable sites refer to it. Do not provide random or inaccurate answers. If the search does not yield any results or the information is unavailable in your model, clearly respond that the information is unavailable.
+	You must always provide your answers in both Thai and English. Ensure that your responses are precise, fact-based, and directly address the user's question. Do not include any extraneous information beyond what is necessary to answer the query.
+	If you don't know just say "Don't know" don't need Thai just the word "Don't know".
+	For example:
+	User Query: Where are EN16101?
+	Your Response:
+	ภาษาไทย: อยู่ข้างตึก 50
+	English: Near 50th anniversary building
 
-For example:
-User Query: "Where are EN16101?"
-Your Response:
-ภาษาไทย: อยู่ข้างตึก 50
-English: Near 50th anniversary building
-
-Important rules:
-1. Always use the data from the JSON file to answer the question.
-2. If the required information is not available in the JSON file, search for the information using reliable sources.
-3. Before answering, verify the credibility by checking if multiple reputable sites confirm the information.
-4. Do not provide random or inaccurate information.
-5. If the search does not yield any results or the information is not available, clearly state that the information is unavailable.
-6. Keep the response strictly limited to answering the user’s query without additional commentary or unrelated details.
-7. Answer in both languages (Thai and English) in every response.
-`
-	fullPrompt := systemPrompt + "\n\nJSON Data:\n" + string(jsonData) + "\n\nUser Query:\n" + prompt
+	Important rules:
+	1. Always use the data from the JSON file to answer the question, if the information is available there.
+	2. **If the required information is not found in the JSON file, search for the information from reliable sources.**
+	3. Before answering, verify the credibility of the information by checking if multiple reputable sites confirm it.
+	4. Do not provide random or inaccurate information.
+	5. If the search does not yield any results or the information is unavailable, clearly state that the information is unavailable.
+	6. Keep the response strictly limited to answering the user’s query without additional commentary or unrelated details.
+	7. Answer in both languages (Thai and English) in every response.
+	8. Must answer with raw text, do not include any HTML tags or formatting.`
+	fullPrompt := "More Data:\n" + string(data) + "\n\nSystem Query:\n" + systemPrompt + "\n\nUser Query:\n" + prompt
 
 	switch ai {
 	case "gemini":
@@ -111,11 +112,24 @@ Important rules:
 			}
 		}
 		aiAnswer.Answer = fmt.Sprintf("%v", resp.Candidates[0].Content.Parts[0])
+		if strings.Contains(aiAnswer.Answer, "Don't know") {
+			resp, err = dontKnow(generative, "Answer about Khon Kaen University(KKU).You must always provide your answers in both Thai and English(Example. ภาษาไทย:สวัสดี English:Hello).(Must answer with raw text, do not include any HTML tags or formatting)"+prompt)
+			if err != nil {
+				return nil, err
+			}
+		}
+		aiAnswer.Answer = fmt.Sprintf("%v", resp.Candidates[0].Content.Parts[0])
 		return aiAnswer, nil
 	}
 	return nil, fmt.Errorf("unsupported AI model")
 }
-
+func dontKnow(generative *genai.GenerativeModel, prompt string) (*genai.GenerateContentResponse, error) {
+	resp, err := generative.GenerateContent(context.Background(), genai.Text(prompt))
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
 func ableToRead(text string) []string {
 	var answer []string
 	text = strings.ReplaceAll(text, "\r", "")

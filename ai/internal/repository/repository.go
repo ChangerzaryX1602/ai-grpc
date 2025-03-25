@@ -57,6 +57,7 @@ func generateContentWithFallback(ctx context.Context, prompt string, imageData [
 		apiKey := randomAPIKey(aiKeys)
 		resp, err = generate(ctx, ai, prompt, imageData, apiKey, chosenModel)
 		if err != nil {
+			fmt.Println(err)
 			disabledModels[chosenModel] = time.Now().Add(time.Second * 30)
 			continue
 		}
@@ -70,6 +71,7 @@ func generate(ctx context.Context, ai string, prompt string, imageData []byte, a
 	jsonFilePath := "./assets/question.json"
 	data, err := ioutil.ReadFile(jsonFilePath)
 	if err != nil {
+		fmt.Println(err)
 		return nil, fmt.Errorf("failed to read json file: %w", err)
 	}
 	//If you don't know just say "Don't know" don't need Thai just the word "Don't know".
@@ -98,6 +100,7 @@ func generate(ctx context.Context, ai string, prompt string, imageData []byte, a
 		var resp *genai.GenerateContentResponse
 		client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
 		if err != nil {
+			fmt.Println(err)
 			return nil, err
 		}
 		defer client.Close()
@@ -106,11 +109,13 @@ func generate(ctx context.Context, ai string, prompt string, imageData []byte, a
 		if len(imageData) > 0 {
 			resp, err = generative.GenerateContent(ctx, genai.Text(fullPrompt), genai.ImageData("jpeg", imageData))
 			if err != nil {
+				fmt.Println(err)
 				return nil, err
 			}
 		} else {
 			resp, err = generative.GenerateContent(ctx, genai.Text(fullPrompt))
 			if err != nil {
+				fmt.Println(err)
 				return nil, err
 			}
 		}
@@ -136,31 +141,37 @@ func generate(ctx context.Context, ai string, prompt string, imageData []byte, a
 			// Assuming resp is of type map[string]interface{}
 			candidates, ok := resp["candidates"].([]interface{})
 			if !ok || len(candidates) == 0 {
+				fmt.Println(err)
 				return nil, fmt.Errorf("no candidates found")
 			}
 
 			candidate, ok := candidates[0].(map[string]interface{})
 			if !ok {
+				fmt.Println(err)
 				return nil, fmt.Errorf("candidate type assertion failed")
 			}
 
 			content, ok := candidate["content"].(map[string]interface{})
 			if !ok {
+				fmt.Println(err)
 				return nil, fmt.Errorf("content type assertion failed")
 			}
 
 			parts, ok := content["parts"].([]interface{})
 			if !ok || len(parts) == 0 {
+				fmt.Println(err)
 				return nil, fmt.Errorf("no parts found in content")
 			}
 			var textArr []string
 			for _, part := range parts {
 				firstPart, ok := part.(map[string]interface{})
 				if !ok {
+					fmt.Println(err)
 					return nil, fmt.Errorf("part type assertion failed")
 				}
 				text, ok := firstPart["text"].(string)
 				if !ok {
+					fmt.Println(err)
 					return nil, fmt.Errorf("text type assertion failed")
 				}
 				textArr = append(textArr, text)

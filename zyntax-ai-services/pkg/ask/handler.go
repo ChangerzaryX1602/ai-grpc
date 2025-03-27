@@ -112,6 +112,25 @@ func (h *askHandler) Ask(c *fiber.Ctx) error {
 	}
 	for _, fee := range isFeeList {
 		if strings.Contains(strings.ToLower(ask.Question), fee) {
+			//save message
+			historyMessage := HistoryMessage{
+				Question:  ask.Question,
+				Answer:    "https://img2.pic.in.th/pic/.-650x900.png",
+				CreatedAt: time.Now(),
+			}
+			if err := h.db.Create(&historyMessage).Error; err != nil {
+				log.Printf("could not save history: %v", err)
+				return c.Status(http.StatusInternalServerError).SendString(fmt.Sprintf("Error saving history: %v", err))
+			}
+			//save map
+			mapHistoryMessage := MapHistoryMessage{
+				HistoryId: ask.HistoryId,
+				MessageId: historyMessage.ID,
+			}
+			if err := h.db.Create(&mapHistoryMessage).Error; err != nil {
+				log.Printf("could not save map: %v", err)
+				return c.Status(http.StatusInternalServerError).SendString(fmt.Sprintf("Error saving map: %v", err))
+			}
 			return c.SendString("https://img2.pic.in.th/pic/.-650x900.png")
 		}
 	}

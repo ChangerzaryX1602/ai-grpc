@@ -1,0 +1,163 @@
+definitions:
+  ask.Ask:
+    properties:
+      history_id:
+        type: integer
+      question:
+        type: string
+    type: object
+  ask.History:
+    properties:
+      place_holder:
+        type: string
+    type: object
+  models.Oauth:
+    properties:
+      code:
+        type: string
+    type: object
+info:
+  contact: {}
+  title: Zyntax ai API
+paths:
+  /api/v1/ask/:
+    post:
+      consumes:
+      - application/json
+      description: Ask a question to the AI service
+      parameters:
+      - description: Question to ask
+        in: body
+        name: question
+        required: true
+        schema:
+          $ref: '#/definitions/ask.Ask'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Ask a question
+      tags:
+      - Ask
+  /api/v1/ask/history:
+    get:
+      consumes:
+      - application/json
+      description: Get all histories
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Get all histories
+      tags:
+      - History
+    post:
+      consumes:
+      - application/json
+      description: Create a history
+      parameters:
+      - description: History to create
+        in: body
+        name: history
+        required: true
+        schema:
+          $ref: '#/definitions/ask.History'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Create a history
+      tags:
+      - History
+  /api/v1/ask/history/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a history
+      parameters:
+      - description: History ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a history
+      tags:
+      - History
+    put:
+      consumes:
+      - application/json
+      description: Update a history
+      parameters:
+      - description: History ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: History to update
+        in: body
+        name: history
+        required: true
+        schema:
+          $ref: '#/definitions/ask.History'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Update a history
+      tags:
+      - History
+  /api/v1/ask/history/messages/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get history messages by history ID
+      parameters:
+      - description: History ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Get history messages by history ID
+      tags:
+      - History
+  /api/v1/auth/:
+    post:
+      consumes:
+      - application/json
+      description: https://oauth.kku.ac.th/authorize?response_type=code&client_id=e8fdb4894be17a3a&redirect_uri=http://localhost:8080/api/v1/swagger/index.html
+      parameters:
+      - description: Code from oauth
+        in: body
+        name: code
+        required: true
+        schema:
+          $ref: '#/definitions/models.Oauth'
+      produces:
+      - application/json
+      responses: {}
+      summary: Login
+      tags:
+      - Auth
+schemes:
+- http
+- https
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

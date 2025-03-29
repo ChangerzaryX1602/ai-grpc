@@ -4,6 +4,7 @@ import (
 	"github.com/Zentrix-Software-Hive/zyntax-ai-services/internal/handlers"
 	"github.com/Zentrix-Software-Hive/zyntax-ai-services/pkg/ask"
 	"github.com/Zentrix-Software-Hive/zyntax-ai-services/pkg/auth"
+	"github.com/Zentrix-Software-Hive/zyntax-ai-services/pkg/file"
 	"github.com/Zentrix-Software-Hive/zyntax-ai-services/pkg/models"
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
@@ -24,11 +25,15 @@ func (s *Server) SetupRoutes(app *fiber.App) {
 	s.MainDbConn.AutoMigrate(&models.MainUser{})
 	s.MainDbConn.AutoMigrate(&ask.History{}, &ask.HistoryMessage{})
 	s.MainDbConn.AutoMigrate(&ask.MapHistoryMessage{}, &ask.MapUserHistory{})
+	s.MainDbConn.AutoMigrate(&models.File{})
 	routerResource := handlers.NewRouterResources(s.JwtResources.JwtKeyfunc)
+	fileRepository := file.NewFileRepository(s.MainDbConn)
 	authRepository := auth.NewAuthRepository(s.MainDbConn)
 	authService := auth.NewAuthService(authRepository)
+	fileService := file.NewFileService(fileRepository)
 	ask.NewAskHandler(app.Group("/api/v1/ask"), routerResource, ":50051", s.MainDbConn)
 	auth.NewAuthHandler(app.Group("/api/v1/auth"), authService, s.JwtResources)
+	file.NewFileHandler(app.Group("/api/v1/files"), fileService)
 	// Prepare a fallback route to always serve the 'index.html', had there not be any matching routes.
 	app.Static("*", "./web/build/index.html")
 }

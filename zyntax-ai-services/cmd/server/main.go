@@ -25,6 +25,7 @@ func init() {
 		flag.Parse()
 		runEnv = *flagEnv
 	}
+	os.WriteFile("../ai/assets/env.txt", []byte(runEnv), 0644)
 	// load config by running flag
 	if err := config.LoadConfig(runEnv); err != nil {
 		log.Fatalf("error while loading the env:\n %+v", err)

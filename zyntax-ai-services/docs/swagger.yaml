@@ -11,6 +11,15 @@ definitions:
       place_holder:
         type: string
     type: object
+  models.File:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      path:
+        type: string
+    type: object
   models.Oauth:
     properties:
       code:
@@ -152,6 +161,98 @@ paths:
       summary: Login
       tags:
       - Auth
+  /api/v1/files:
+    get:
+      consumes:
+      - application/json
+      description: Get all files
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Get all files
+      tags:
+      - files
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new file
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new file
+      tags:
+      - files
+  /api/v1/files/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a file
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a file
+      tags:
+      - files
+    get:
+      consumes:
+      - application/json
+      description: Get a file by ID
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Get a file by ID
+      tags:
+      - files
+    put:
+      consumes:
+      - application/json
+      description: Update a file
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: File object
+        in: body
+        name: file
+        required: true
+        schema:
+          $ref: '#/definitions/models.File'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Update a file
+      tags:
+      - files
 schemes:
 - http
 - https
